@@ -82,7 +82,7 @@ CREATE INDEX IF NOT EXISTS idx_tasks_customer ON tasks(customer_id);
     await pool.query(
       `INSERT INTO users (id,name,email,password_hash,role,city,phone,telegram,skills,hourly_rate,rating,reviews,balance,created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-      [u.id, u.name, u.email, hashPassword("demo"), u.role, u.city, u.phone ?? "", u.telegram ?? "", u.skills, u.hourlyRate, u.rating, u.reviews, u.balance, u.createdAt]
+      [u.id, u.name, u.email, hashPassword("humanlayer2026"), u.role, u.city, u.phone ?? "", u.telegram ?? "", u.skills, u.hourlyRate, u.rating, u.reviews, u.balance, u.createdAt]
     );
   }
   console.log(`✅ Пользователи: ${seedUsers.length}`);
@@ -97,7 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_tasks_customer ON tasks(customer_id);
   console.log(`✅ Задания: ${seedTasks.length}`);
 
   await pool.end();
-  console.log("🎉 Сид завершён. Демо-вход: anna@demo.hl / agent@demo.hl, пароль demo");
+  console.log("🎉 Сид завершён. Сайт готов к работе.");
 }
 
 main().catch((e) => {
