@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://humanlayer-silk.vercel.app/sitemap.xml

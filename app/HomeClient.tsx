@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, Suspense } from "react";
 import { useStore } from "@/components/AppProvider";
+import { CardSkeleton } from "@/components/Skeleton";
 import TaskCard from "@/components/TaskCard";
 import HomeTasks from "@/app/HomeTasks";
 import {
@@ -152,7 +153,9 @@ export default function Home() {
             Все задания <IconArrowRight size={16} />
           </Link>
         </div>
-        <HomeTasks />
+        <Suspense fallback={<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>}>
+          <HomeTasks />
+        </Suspense>
         <Link href="/tasks" className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-accent-400 hover:text-accent-300 sm:hidden">
           Все задания <IconArrowRight size={16} />
         </Link>
