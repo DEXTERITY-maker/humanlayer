@@ -62,7 +62,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Начальная загрузка: сессия + задания + публичные профили.
   // Если API/БД недоступны — показываем пустой UI, ready всё равно выставляем.
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -90,7 +89,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       alive = false;
     };
   }, []);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const refreshMe = useCallback(async () => {
     try {
