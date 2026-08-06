@@ -30,9 +30,9 @@ function RegisterForm() {
   const toggleSkill = (s: string) =>
     setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const err = register({ name, email, password, role, city, skills, hourlyRate });
+    const err = await register({ name, email, password, role, city, skills, hourlyRate });
     if (err) return setError(err);
     router.push("/account");
   };

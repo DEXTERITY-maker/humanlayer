@@ -17,9 +17,9 @@ export default function LoginPage() {
     return null;
   }
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const err = login(email, password);
+    const err = await login(email, password);
     if (err) return setError(err);
     router.push("/account");
   };

@@ -67,8 +67,8 @@ export default function WorkPage() {
 
   const totalMs = (task.timerTotalMs ?? 0) + elapsed;
 
-  const handleStart = () => {
-    startWork(task.id);
+  const handleStart = async () => {
+    await startWork(task.id);
     setStartedAt(Date.now());
     setRunning(true);
   };

@@ -116,7 +116,7 @@ export default function TaskDetailPage() {
                     <IconCheck size={16} /> Отклик отправлен, ждём подтверждения заказчика
                   </p>
                 ) : (
-                  <button onClick={() => applyToTask(task.id)} className="btn btn-primary px-6 py-3">
+                  <button onClick={async () => { await applyToTask(task.id); }} className="btn btn-primary px-6 py-3">
                     Откликнуться
                   </button>
                 )
@@ -180,7 +180,7 @@ export default function TaskDetailPage() {
                           <span key={s} className="rounded-md bg-navy-700/60 px-1.5 py-0.5 text-[11px] text-muted">{s}</span>
                         ))}
                       </div>
-                      <button onClick={() => assignExecutor(task.id, c.id)} className="btn btn-mint btn-sm w-full">
+                      <button onClick={async () => { await assignExecutor(task.id, c.id); }} className="btn btn-mint btn-sm w-full">
                         Назначить исполнителем
                       </button>
                     </div>
@@ -222,7 +222,7 @@ export default function TaskDetailPage() {
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={() => acceptWork(task.id)} className="btn btn-mint">
+                  <button onClick={async () => { await acceptWork(task.id); }} className="btn btn-mint">
                     <IconCheck size={16} />
                     Принять работу, перевести оплату
                   </button>
@@ -240,8 +240,8 @@ export default function TaskDetailPage() {
                       onChange={(e) => setRejectText(e.target.value)}
                     />
                     <button
-                      onClick={() => {
-                        rejectWork(task.id, rejectText.trim() || "Работа не принята, доработайте");
+                      onClick={async () => {
+                        await rejectWork(task.id, rejectText.trim() || "Работа не принята, доработайте");
                         setShowReject(false);
                         setRejectText("");
                       }}

@@ -73,15 +73,22 @@ export default function AccountPage() {
   const toggleSkill = (s: string, list: string[], set: (v: string[]) => void) =>
     set(list.includes(s) ? list.filter((x) => x !== s) : [...list, s]);
 
-  const saveProfile = () => {
-    updateProfile({ name: name.trim() || current.name, city, phone, telegram, skills, hourlyRate });
-    setMsg("Профиль сохранён");
+  const saveProfile = async () => {
+    const err = await updateProfile({
+      name: name.trim() || current.name,
+      city,
+      phone,
+      telegram,
+      skills,
+      hourlyRate,
+    });
+    setMsg(err ?? "Профиль сохранён");
     setTimeout(() => setMsg(null), 2500);
   };
 
-  const submitTask = (e: React.FormEvent) => {
+  const submitTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    const err = createTask({
+    const err = await createTask({
       title: fTitle,
       description: fDesc,
       category: fCat,
@@ -136,9 +143,9 @@ export default function AccountPage() {
               <div className="font-bold text-mint-300">{fmt(current.balance)}</div>
             </div>
             <button
-              onClick={() => {
-                addCredits(1000);
-                setMsg("+1 000 кредитов начислено");
+              onClick={async () => {
+                const err = await addCredits(1000);
+                setMsg(err ?? "+1 000 кредитов начислено");
                 setTimeout(() => setMsg(null), 2500);
               }}
               className="ml-1 rounded-lg border border-mint-500/40 px-2.5 py-1 text-xs font-semibold text-mint-300 hover:bg-mint-500/10"
@@ -334,7 +341,9 @@ export default function AccountPage() {
                                   </p>
                                 </div>
                                 <button
-                                  onClick={() => assignExecutor(t.id, c.id)}
+                                  onClick={async () => {
+                                    await assignExecutor(t.id, c.id);
+                                  }}
                                   className="rounded-lg bg-mint-500 px-2.5 py-1 text-xs font-bold text-navy-950 hover:bg-mint-400"
                                 >
                                   Назначить
@@ -353,7 +362,9 @@ export default function AccountPage() {
                             Проверить доказательства
                           </Link>
                           <button
-                            onClick={() => acceptWork(t.id)}
+                            onClick={async () => {
+                              await acceptWork(t.id);
+                            }}
                             className="btn btn-ghost btn-sm"
                             title="Быстро принять работу"
                           >

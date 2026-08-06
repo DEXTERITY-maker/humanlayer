@@ -9,30 +9,7 @@ import React, {
   useState,
 } from "react";
 import type { Proof, Role, Task, User } from "@/lib/types";
-import { seedTasks, seedUsers } from "@/lib/demo";
-import { uid } from "@/lib/types";
-
-const LS_USERS = "hl_users_v1";
-const LS_TASKS = "hl_tasks_v1";
-const LS_SESSION = "hl_session_v1";
-
-function load<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function save(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // localStorage переполнен (например, большие фото) — молча игнорируем
-  }
-}
+import { j } from "@/lib/api";
 
 export interface RegisterInput {
   name: string;
@@ -44,219 +21,301 @@ export interface RegisterInput {
   hourlyRate: number;
 }
 
+type CreateTaskInput = Omit<
+  Task,
+  "id" | "status" | "customerId" | "applications" | "proofs" | "createdAt"
+>;
+
 interface Store {
   users: User[];
   tasks: Task[];
   current: User | null;
   ready: boolean;
-  register: (inp: RegisterInput) => string | null;
-  login: (email: string, password: string) => string | null;
-  logout: () => void;
-  updateProfile: (patch: Partial<User>) => void;
-  addCredits: (amount: number) => void;
-  createTask: (inp: Omit<Task, "id" | "status" | "customerId" | "applications" | "proofs" | "createdAt">) => string | null;
-  applyToTask: (taskId: string) => void;
-  assignExecutor: (taskId: string, executorId: string) => void;
-  startWork: (taskId: string) => void;
-  submitProof: (taskId: string, proof: Omit<Proof, "id" | "at">, elapsedMs: number) => void;
-  acceptWork: (taskId: string) => void;
-  rejectWork: (taskId: string, comment: string) => void;
+  register: (inp: RegisterInput) => Promise<string | null>;
+  login: (email: string, password: string) => Promise<string | null>;
+  logout: () => Promise<void>;
+  updateProfile: (patch: Partial<User>) => Promise<string | null>;
+  addCredits: (amount: number) => Promise<string | null>;
+  createTask: (inp: CreateTaskInput) => Promise<string | null>;
+  applyToTask: (taskId: string) => Promise<string | null>;
+  assignExecutor: (taskId: string, executorId: string) => Promise<string | null>;
+  startWork: (taskId: string) => Promise<string | null>;
+  submitProof: (
+    taskId: string,
+    proof: Omit<Proof, "id" | "at">,
+    elapsedMs: number
+  ) => Promise<string | null>;
+  acceptWork: (taskId: string) => Promise<string | null>;
+  rejectWork: (taskId: string, comment: string) => Promise<string | null>;
 }
 
 const Ctx = createContext<Store | null>(null);
 
+const errMsg = (e: unknown, fallback: string) =>
+  e instanceof Error && e.message ? e.message : fallback;
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [current, setCurrent] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
 
-  // Одноразовая инициализация из localStorage — SSR-безопасно: до монтирования рендерим сид-данные
+  // Начальная загрузка: сессия + задания + публичные профили.
+  // Если API/БД недоступны — показываем пустой UI, ready всё равно выставляем.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setUsers(load<User[]>(LS_USERS, seedUsers));
-    setTasks(load<Task[]>(LS_TASKS, seedTasks));
-    setSessionId(load<string | null>(LS_SESSION, null));
-    setReady(true);
+    let alive = true;
+    (async () => {
+      try {
+        const [me, ts] = await Promise.all([
+          j<{ user: User | null }>("/api/me"),
+          j<{ tasks: Task[] }>("/api/tasks"),
+        ]);
+        if (!alive) return;
+        setCurrent(me.user);
+        setTasks(ts.tasks);
+      } catch {
+        // API недоступен (например, нет DATABASE_URL) — пустой старт
+      } finally {
+        if (alive) setReady(true);
+      }
+      try {
+        const us = await j<{ users: User[] }>("/api/users");
+        if (alive) setUsers(us.users);
+      } catch {
+        // профили не критичны для первого рендера
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  useEffect(() => {
-    if (!ready) return;
-    save(LS_USERS, users);
-  }, [users, ready]);
-
-  useEffect(() => {
-    if (!ready) return;
-    save(LS_TASKS, tasks);
-  }, [tasks, ready]);
-
-  useEffect(() => {
-    if (!ready) return;
-    if (sessionId) save(LS_SESSION, sessionId);
-    else window.localStorage.removeItem(LS_SESSION);
-  }, [sessionId, ready]);
-
-  const current = useMemo(
-    () => users.find((u) => u.id === sessionId) ?? null,
-    [users, sessionId]
-  );
-
-  const patchUser = useCallback((id: string, patch: Partial<User>) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+  const refreshMe = useCallback(async () => {
+    try {
+      const d = await j<{ user: User | null }>("/api/me");
+      if (d.user) {
+        setCurrent(d.user);
+        setUsers((prev) =>
+          prev.some((u) => u.id === d.user!.id)
+            ? prev.map((u) => (u.id === d.user!.id ? d.user! : u))
+            : [...prev, d.user!]
+        );
+      }
+    } catch {
+      // баланс просто останется прежним до следующего обновления
+    }
   }, []);
 
-  const patchTask = useCallback((id: string, patch: Partial<Task>) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const upsertTask = useCallback((t: Task) => {
+    setTasks((prev) => {
+      const i = prev.findIndex((x) => x.id === t.id);
+      if (i === -1) return [t, ...prev];
+      const next = [...prev];
+      next[i] = t;
+      return next;
+    });
   }, []);
 
   const register = useCallback(
-    (inp: RegisterInput): string | null => {
-      const email = inp.email.trim().toLowerCase();
-      if (!inp.name.trim() || !email || !inp.password) return "Заполните все поля";
-      if (users.some((u) => u.email === email)) return "Пользователь с таким email уже есть";
-      const user: User = {
-        id: uid(),
-        name: inp.name.trim(),
-        email,
-        password: inp.password,
-        role: inp.role,
-        city: inp.city,
-        skills: inp.skills,
-        hourlyRate: inp.hourlyRate || 0,
-        rating: 0,
-        reviews: 0,
-        balance: inp.role === "customer" ? 2000 : 1000,
-        createdAt: Date.now(),
-      };
-      setUsers((prev) => [...prev, user]);
-      setSessionId(user.id);
-      return null;
+    async (inp: RegisterInput): Promise<string | null> => {
+      try {
+        const d = await j<{ user: User }>("/api/auth/register", {
+          method: "POST",
+          body: JSON.stringify(inp),
+        });
+        setCurrent(d.user);
+        setUsers((prev) =>
+          prev.some((u) => u.id === d.user.id) ? prev : [...prev, d.user]
+        );
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка регистрации");
+      }
     },
-    [users]
+    []
   );
 
   const login = useCallback(
-    (email: string, password: string): string | null => {
-      const u = users.find(
-        (x) => x.email === email.trim().toLowerCase() && x.password === password
-      );
-      if (!u) return "Неверный email или пароль";
-      setSessionId(u.id);
-      return null;
+    async (email: string, password: string): Promise<string | null> => {
+      try {
+        const d = await j<{ user: User }>("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        });
+        setCurrent(d.user);
+        setUsers((prev) =>
+          prev.some((u) => u.id === d.user.id) ? prev : [...prev, d.user]
+        );
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка входа");
+      }
     },
-    [users]
+    []
   );
 
-  const logout = useCallback(() => setSessionId(null), []);
+  const logout = useCallback(async () => {
+    try {
+      await j("/api/auth/logout", { method: "POST" });
+    } catch {
+      // куки может не быть — выходим локально
+    }
+    setCurrent(null);
+  }, []);
 
   const updateProfile = useCallback(
-    (patch: Partial<User>) => {
-      if (!current) return;
-      patchUser(current.id, patch);
+    async (patch: Partial<User>): Promise<string | null> => {
+      try {
+        const d = await j<{ user: User }>("/api/me", {
+          method: "PATCH",
+          body: JSON.stringify(patch),
+        });
+        setCurrent(d.user);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === d.user.id ? d.user : u))
+        );
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка сохранения профиля");
+      }
     },
-    [current, patchUser]
+    []
   );
 
   const addCredits = useCallback(
-    (amount: number) => {
-      if (!current) return;
-      patchUser(current.id, { balance: current.balance + amount });
+    async (amount: number): Promise<string | null> => {
+      try {
+        const d = await j<{ user: User }>("/api/me/credits", {
+          method: "POST",
+          body: JSON.stringify({ amount }),
+        });
+        setCurrent(d.user);
+        setUsers((prev) =>
+          prev.map((u) => (u.id === d.user.id ? d.user : u))
+        );
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка начисления кредитов");
+      }
     },
-    [current, patchUser]
+    []
   );
 
   const createTask = useCallback(
-    (inp: Omit<Task, "id" | "status" | "customerId" | "applications" | "proofs" | "createdAt">): string | null => {
-      if (!current || current.role !== "customer") return "Нужен аккаунт заказчика";
-      if (!inp.title.trim() || !inp.description.trim()) return "Заполните название и описание";
-      if (inp.budget <= 0) return "Вознаграждение должно быть больше нуля";
-      if (current.balance < inp.budget) return "Недостаточно средств на балансе (эскроу)";
-      patchUser(current.id, { balance: current.balance - inp.budget });
-      const task: Task = {
-        ...inp,
-        id: uid(),
-        status: "open",
-        customerId: current.id,
-        applications: [],
-        proofs: [],
-        createdAt: Date.now(),
-      };
-      setTasks((prev) => [task, ...prev]);
-      return null;
+    async (inp: CreateTaskInput): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>("/api/tasks", {
+          method: "POST",
+          body: JSON.stringify(inp),
+        });
+        upsertTask(d.task);
+        // эскроу списал бюджет — берём актуальный баланс с сервера
+        await refreshMe();
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка публикации задания");
+      }
     },
-    [current, patchUser]
+    [upsertTask, refreshMe]
   );
 
   const applyToTask = useCallback(
-    (taskId: string) => {
-      if (!current || current.role !== "executor") return;
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || task.status !== "open") return;
-      if (task.applications.some((a) => a.executorId === current.id)) return;
-      const applications = [
-        ...task.applications,
-        { taskId, executorId: current.id, at: Date.now() },
-      ];
-      patchTask(taskId, { applications, status: "pending" });
+    async (taskId: string): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>(`/api/tasks/${taskId}/apply`, {
+          method: "POST",
+        });
+        upsertTask(d.task);
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка отклика");
+      }
     },
-    [current, tasks, patchTask]
+    [upsertTask]
   );
 
   const assignExecutor = useCallback(
-    (taskId: string, executorId: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || task.status !== "pending" && task.status !== "open") return;
-      patchTask(taskId, { executorId, status: "in_progress" });
+    async (taskId: string, executorId: string): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>(`/api/tasks/${taskId}/assign`, {
+          method: "POST",
+          body: JSON.stringify({ executorId }),
+        });
+        upsertTask(d.task);
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка назначения исполнителя");
+      }
     },
-    [tasks, patchTask]
+    [upsertTask]
   );
 
   const startWork = useCallback(
-    (taskId: string) => {
-      patchTask(taskId, { timerStartedAt: Date.now() });
+    async (taskId: string): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>(`/api/tasks/${taskId}/start`, {
+          method: "POST",
+        });
+        upsertTask(d.task);
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка запуска таймера");
+      }
     },
-    [patchTask]
+    [upsertTask]
   );
 
   const submitProof = useCallback(
-    (taskId: string, proof: Omit<Proof, "id" | "at">, elapsedMs: number) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || !current) return;
-      const proofs = [...task.proofs, { ...proof, id: uid(), at: Date.now() }];
-      const timerTotalMs = (task.timerTotalMs ?? 0) + elapsedMs;
-      patchTask(taskId, { proofs, timerTotalMs, timerStartedAt: undefined, status: "review" });
+    async (
+      taskId: string,
+      proof: Omit<Proof, "id" | "at">,
+      elapsedMs: number
+    ): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>(`/api/tasks/${taskId}/proof`, {
+          method: "POST",
+          body: JSON.stringify({ proof, elapsedMs }),
+        });
+        upsertTask(d.task);
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка отправки отчёта");
+      }
     },
-    [tasks, current, patchTask]
+    [upsertTask]
   );
 
   const acceptWork = useCallback(
-    (taskId: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || task.status !== "review" || !task.executorId) return;
-      // Сумма: для почасовых — часы × ставка, но не больше бюджета
-      let amount = task.budget;
-      if (task.hourly && task.timerTotalMs) {
-        const hours = task.timerTotalMs / 3600000;
-        const executor = users.find((u) => u.id === task.executorId);
-        if (executor) amount = Math.min(task.budget, Math.round(hours * executor.hourlyRate));
+    async (taskId: string): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>(`/api/tasks/${taskId}/accept`, {
+          method: "POST",
+        });
+        upsertTask(d.task);
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка приёмки работы");
       }
-      const commission = Math.round(amount * 0.05); // комиссия платформы 5%
-      const payout = amount - commission;
-      const executor = users.find((u) => u.id === task.executorId);
-      if (executor) patchUser(task.executorId, { balance: executor.balance + payout });
-      patchTask(taskId, { status: "done" });
     },
-    [tasks, users, patchTask, patchUser]
+    [upsertTask]
   );
 
   const rejectWork = useCallback(
-    (taskId: string, comment: string) => {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task || task.status !== "review") return;
-      patchTask(taskId, { status: "in_progress", rejectComment: comment });
+    async (taskId: string, comment: string): Promise<string | null> => {
+      try {
+        const d = await j<{ task: Task }>(`/api/tasks/${taskId}/reject`, {
+          method: "POST",
+          body: JSON.stringify({ comment }),
+        });
+        upsertTask(d.task);
+        return null;
+      } catch (e) {
+        return errMsg(e, "Ошибка отклонения работы");
+      }
     },
-    [tasks, patchTask]
+    [upsertTask]
   );
 
   const value = useMemo<Store>(
@@ -278,7 +337,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       acceptWork,
       rejectWork,
     }),
-    [users, tasks, current, ready, register, login, logout, updateProfile, addCredits, createTask, applyToTask, assignExecutor, startWork, submitProof, acceptWork, rejectWork]
+    [
+      users,
+      tasks,
+      current,
+      ready,
+      register,
+      login,
+      logout,
+      updateProfile,
+      addCredits,
+      createTask,
+      applyToTask,
+      assignExecutor,
+      startWork,
+      submitProof,
+      acceptWork,
+      rejectWork,
+    ]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
