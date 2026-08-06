@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS tasks (
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_city ON tasks(city);
 CREATE INDEX IF NOT EXISTS idx_tasks_customer ON tasks(customer_id);
+CREATE TABLE IF NOT EXISTS reviews (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(id),
+  from_id TEXT NOT NULL REFERENCES users(id),
+  to_id TEXT NOT NULL REFERENCES users(id),
+  rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment TEXT NOT NULL DEFAULT '',
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_to ON reviews(to_id);
 `;
 
 let schemaReady: Promise<void> | null = null;

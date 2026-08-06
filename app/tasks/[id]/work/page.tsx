@@ -17,7 +17,7 @@ export default function WorkPage() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [note, setNote] = useState("");
-  const [photo, setPhoto] = useState<{ name: string; dataUrl: string } | null>(null);
+  const [photo, setPhoto] = useState<{ name: string; url: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,22 +73,30 @@ export default function WorkPage() {
     setRunning(true);
   };
 
-  const onFile = (f: File | undefined) => {
+  const onFile = async (f: File | undefined) => {
     if (!f) return;
     if (!f.type.startsWith("image/")) {
       setError("Пожалуйста, выберите изображение (фото доказательства)");
       return;
     }
-    if (f.size > 1_500_000) {
-      setError("Фото слишком большое — выберите файл до 1,5 МБ");
+    if (f.size > 5_000_000) {
+      setError("Фото слишком большое — выберите файл до 5 МБ");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPhoto({ name: f.name, dataUrl: String(reader.result) });
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.append("file", f);
+      const res = await fetch("/api/upload", { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Ошибка загрузки");
+      setPhoto({ name: data.name, url: data.url });
       setError(null);
-    };
-    reader.readAsDataURL(f);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ошибка загрузки");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -98,7 +106,7 @@ export default function WorkPage() {
     }
     setBusy(true);
     try {
-      if (photo) submitProof(task.id, { type: "photo", name: photo.name, dataUrl: photo.dataUrl }, elapsed);
+      if (photo) submitProof(task.id, { type: "photo", name: photo.name, dataUrl: photo.url }, elapsed);
       if (note.trim()) submitProof(task.id, { type: "text", name: "Текстовый отчёт", text: note.trim() }, 0);
       router.push(`/tasks/${task.id}`);
     } catch {
@@ -195,7 +203,7 @@ export default function WorkPage() {
           <div className="mb-4 flex items-center gap-3 rounded-xl border border-mint-500/30 bg-mint-500/10 p-3">
             {/* data-URL от пользователя — next/image не нужен */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photo.dataUrl} alt={photo.name} className="h-14 w-14 rounded-lg object-cover" />
+            <img src={photo.url} alt={photo.name} className="h-14 w-14 rounded-lg object-cover" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-cream">{photo.name}</p>
               <p className="text-xs text-muted">Фото добавлено к отчёту</p>

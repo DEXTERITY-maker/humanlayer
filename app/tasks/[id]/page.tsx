@@ -20,6 +20,30 @@ export default function TaskDetailPage() {
   const { tasks, users, current, applyToTask, assignExecutor, acceptWork, rejectWork } = useStore();
   const [rejectText, setRejectText] = useState("");
   const [showReject, setShowReject] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSent, setReviewSent] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleReview = async () => {
+    if (!task) return;
+    setReviewBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: reviewRating, comment: reviewText }),
+      });
+      if (res.ok) setReviewSent(true);
+      else setError((await res.json()).error || "Ошибка");
+    } catch {
+      setError("Не удалось отправить отзыв");
+    } finally {
+      setReviewBusy(false);
+    }
+  };
 
   const task = useMemo(() => tasks.find((t) => t.id === params.id), [tasks, params.id]);
   const customer = useMemo(
@@ -255,9 +279,33 @@ export default function TaskDetailPage() {
             )}
 
             {task.status === "done" && (
-              <p className="inline-flex items-center gap-2 rounded-xl border border-mint-500/30 bg-mint-500/10 px-4 py-2.5 text-sm font-semibold text-mint-300">
-                <IconCheck size={16} /> Задание выполнено{executor ? ` · ${executor.name}` : ""}. Комиссия платформы 5% удержана.
-              </p>
+              <div className="space-y-4">
+                <p className="inline-flex items-center gap-2 rounded-xl border border-mint-500/30 bg-mint-500/10 px-4 py-2.5 text-sm font-semibold text-mint-300">
+                  <IconCheck size={16} /> Задание выполнено{executor ? ` · ${executor.name}` : ""}. Комиссия платформы 5% удержана.
+                </p>
+                {(isOwner || isExecutor) && !reviewSent && (
+                  <div className="rounded-xl border border-navy-700 bg-navy-800/40 p-4">
+                    <p className="mb-3 text-sm font-semibold">Оставить отзыв</p>
+                    <div className="mb-3 flex items-center gap-1">
+                      {[1,2,3,4,5].map((n) => (
+                        <button key={n} onClick={() => setReviewRating(n)}
+                          className={`grid size-8 place-items-center rounded-lg text-sm font-bold transition-colors ${
+                            n <= reviewRating ? "bg-accent-500 text-navy-950" : "bg-navy-700 text-muted"
+                          }`}
+                        >{n}</button>
+                      ))}
+                    </div>
+                    <input className="input mb-3 w-full" placeholder="Комментарий (необязательно)" value={reviewText} onChange={(e) => setReviewText(e.target.value)} />
+                    {error && <p className="mb-2 text-xs text-red-400">{error}</p>}
+                    <button onClick={handleReview} disabled={reviewBusy} className="btn btn-primary text-sm">
+                      {reviewBusy ? "Отправка…" : "Отправить отзыв"}
+                    </button>
+                  </div>
+                )}
+                {reviewSent && (
+                  <p className="text-sm text-mint-300">✅ Отзыв отправлен. Спасибо!</p>
+                )}
+              </div>
             )}
           </div>
         )}

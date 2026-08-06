@@ -23,7 +23,10 @@ export default function Footer() {
           <Link href="/register" className="hover:text-accent-400 transition-colors">
             Регистрация
           </Link>
-          <a href="#" className="hover:text-accent-400 transition-colors">
+          <a href="/about" className="hover:text-accent-400 transition-colors">
+            О проекте
+          </a>
+          <a href="/privacy" className="hover:text-accent-400 transition-colors">
             Политика конфиденциальности
           </a>
         </div>
