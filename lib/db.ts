@@ -104,7 +104,6 @@ export function rowToUser(r: DbRow): User {
     id: r.id,
     name: r.name,
     email: r.email,
-    password: r.password_hash,
     role: r.role,
     city: r.city,
     phone: r.phone,

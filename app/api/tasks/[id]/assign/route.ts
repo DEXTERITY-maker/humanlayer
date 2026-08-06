@@ -29,6 +29,19 @@ export async function POST(
     return NextResponse.json({ error: "Задание нельзя назначить в текущем статусе" }, { status: 400 });
   }
 
+  const exec = await q("SELECT id FROM users WHERE id = $1", [executorId]);
+  if (exec.length === 0) {
+    return NextResponse.json({ error: "Исполнитель не найден" }, { status: 400 });
+  }
+  if (task.status === "pending") {
+    const applied = (task.applications ?? []).some(
+      (a: { executorId: string }) => a.executorId === executorId
+    );
+    if (!applied) {
+      return NextResponse.json({ error: "Этот исполнитель не откликался на задание" }, { status: 400 });
+    }
+  }
+
   await q("UPDATE tasks SET executor_id = $1, status = 'in_progress' WHERE id = $2", [
     executorId,
     id,

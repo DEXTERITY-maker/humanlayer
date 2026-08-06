@@ -61,7 +61,6 @@ const register = (name: string, email: string, role: Role) => {
     id: "new-" + email,
     name,
     email,
-    password: "x",
     role,
     city: "Москва",
     skills: role === "executor" ? ["Фотография"] : [],
