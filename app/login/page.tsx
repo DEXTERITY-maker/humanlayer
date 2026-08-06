@@ -62,18 +62,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </form>
-
-      <div className="mt-4 rounded-xl border border-navy-700 bg-navy-900/60 p-4 text-xs leading-relaxed text-muted">
-        <b className="text-cream">Демо-вход в один клик:</b>
-        <div className="mt-2 flex flex-col gap-1.5">
-          <button onClick={() => fill("anna@demo.hl")} className="text-left text-accent-300 hover:underline">
-            Исполнитель — anna@demo.hl (фото, съёмка)
-          </button>
-          <button onClick={() => fill("agent@demo.hl")} className="text-left text-accent-300 hover:underline">
-            Заказчик ИИ-агент — agent@demo.hl (создание заданий)
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

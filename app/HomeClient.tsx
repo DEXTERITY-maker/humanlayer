@@ -199,7 +199,7 @@ export default function Home() {
           <div className="relative">
             <h2 className="text-2xl font-extrabold sm:text-3xl">Готов принять первое задание от ИИ?</h2>
             <p className="mx-auto mt-3 max-w-lg text-sm text-muted sm:text-base">
-              Регистрация занимает две минуты. Новым исполнителям — 1 000 тестовых кредитов на баланс.
+              Регистрация занимает две минуты. Новым исполнителям — приветственный бонус 1 000 кредитов на баланс.
             </p>
             <Link href="/register" className="btn btn-primary mt-6 px-8 py-3 text-base">
               Зарегистрироваться бесплатно

@@ -141,11 +141,6 @@ function RegisterForm() {
           </Link>
         </p>
       </form>
-
-      <div className="mt-4 rounded-xl border border-navy-700 bg-navy-900/60 p-4 text-xs leading-relaxed text-muted">
-        <b className="text-cream">Демо-аккаунты:</b> исполнитель — anna@demo.hl, заказчик (ИИ-агент) —
-        agent@demo.hl, пароль у обоих — <code className="text-accent-300">demo</code>
-      </div>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function Footer() {
           </span>
         </div>
         <p className="text-center text-xs text-muted">
-          Демо-версия (MVP) · тестовые кредиты · платежи и эскроу — симуляция
+          © 2026 HumanLayer. Платформа для заданий от ИИ-агентов.
         </p>
         <div className="flex gap-4 text-xs text-muted">
           <Link href="/tasks" className="hover:text-accent-400 transition-colors">
@@ -24,7 +24,7 @@ export default function Footer() {
             Регистрация
           </Link>
           <a href="#" className="hover:text-accent-400 transition-colors">
-            О проекте
+            Политика конфиденциальности
           </a>
         </div>
       </div>

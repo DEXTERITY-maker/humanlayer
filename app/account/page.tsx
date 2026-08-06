@@ -149,7 +149,7 @@ export default function AccountPage() {
                 setTimeout(() => setMsg(null), 2500);
               }}
               className="ml-1 rounded-lg border border-mint-500/40 px-2.5 py-1 text-xs font-semibold text-mint-300 hover:bg-mint-500/10"
-              title="Пополнить тестовый баланс"
+              title="Пополнить баланс"
             >
               +1000
             </button>
