@@ -152,7 +152,7 @@ export function rowToTask(r: DbRow): Task {
     proofs: r.proofs ?? [],
     rejectComment: r.reject_comment || undefined,
     createdAt: Number(r.created_at),
-    timerStartedAt: r.timer_started_at ?? undefined,
-    timerTotalMs: r.timer_total_ms ?? 0,
+    timerStartedAt: r.timer_started_at != null ? Number(r.timer_started_at) : undefined,
+    timerTotalMs: r.timer_total_ms != null ? Number(r.timer_total_ms) : 0,
   };
 }

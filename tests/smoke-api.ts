@@ -55,8 +55,11 @@ function makeClient() {
       const data = await res.json().catch(() => ({}));
       const sc = res.headers.get("set-cookie");
       if (sc) {
-        const m = sc.match(/hl_session=([^;]+)/);
-        if (m) jar.set("hl_session", m[1]);
+        const m = sc.match(/hl_session=([^;]*)/);
+        if (m) {
+          if (m[1]) jar.set("hl_session", m[1]);
+          else jar.delete("hl_session"); // logout: значение пустое → кука удалена
+        }
       }
       return { status: res.status, data: data as T & { error?: string } };
     },
