@@ -4,11 +4,9 @@ import Link from "next/link";
 import type { Task } from "@/lib/types";
 import { STATUS_COLOR, STATUS_LABEL, fmt, fmtDate } from "@/lib/types";
 import { IconClock, IconCoins, IconMapPin } from "@/components/icons";
-import { useStore } from "@/components/AppProvider";
+
 
 export default function TaskCard({ task, compact }: { task: Task; compact?: boolean }) {
-  const { users } = useStore();
-  const customer = users.find(u => u.id === task.customerId);
 
   return (
     <Link
@@ -50,11 +48,6 @@ export default function TaskCard({ task, compact }: { task: Task; compact?: bool
       )}
 
       <div className="flex items-center justify-between border-t border-navy-700/70 pt-3">
-        {customer && (
-          <Link href={`/users/${task.customerId}`} className="text-xs text-muted hover:text-accent-400">
-            {customer.name}
-          </Link>
-        )}
         <span className="inline-flex items-center gap-1.5 font-bold text-accent-400">
           <IconCoins size={16} />
           {fmt(task.budget)}
