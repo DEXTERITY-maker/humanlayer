@@ -239,6 +239,9 @@ export default function TaskDetailPage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.dataUrl} alt={p.name} className="mb-2 max-h-48 w-full rounded-lg object-cover" />
                       ) : null}
+                      {p.text && (
+                        <p className="mb-2 text-sm text-cream">{p.text}</p>
+                      )}
                       <p className="mt-1 text-xs text-muted">
                         {p.name} · {new Date(p.at).toLocaleString("ru-RU")}
                       </p>

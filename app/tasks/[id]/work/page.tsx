@@ -99,15 +99,18 @@ export default function WorkPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!photo && !note.trim()) {
       setError("Добавьте фото или текстовый отчёт — без доказательств заказчик не примет работу");
       return;
     }
     setBusy(true);
     try {
-      if (photo) submitProof(task.id, { type: "photo", name: photo.name, dataUrl: photo.url }, elapsed);
-      if (note.trim()) submitProof(task.id, { type: "text", name: "Текстовый отчёт", text: note.trim() }, 0);
+      if (photo) {
+        await submitProof(task.id, { type: "photo", name: photo.name, dataUrl: photo.url, text: note.trim() || undefined }, elapsed);
+      } else {
+        await submitProof(task.id, { type: "text", name: "Текстовый отчёт", text: note.trim() }, 0);
+      }
       router.push(`/tasks/${task.id}`);
     } catch {
       setError("Не удалось сохранить (возможно, фото слишком большое для хранилища). Добавьте текстовый отчёт.");
