@@ -67,6 +67,16 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at BIGINT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, read, created_at);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(id),
+  from_id TEXT NOT NULL REFERENCES users(id),
+  to_id TEXT NOT NULL REFERENCES users(id),
+  text TEXT NOT NULL,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_messages_task ON messages(task_id, created_at);
 `;
 
 let schemaReady: Promise<void> | null = null;

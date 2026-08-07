@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { q, withTx } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
 import { uid } from "@/lib/types";
+import { notify } from "@/lib/notify";
 
 // POST /api/tasks/[id]/review — отзыв после выполнения (доступен обеим сторонам)
 export async function POST(
@@ -55,6 +56,7 @@ export async function POST(
       toId,
     ]);
   });
+  try { await notify(toId, "review", "Новый отзыв о вашей работе", `/tasks/${id}`); } catch {}
 
   return NextResponse.json({ ok: true });
 }

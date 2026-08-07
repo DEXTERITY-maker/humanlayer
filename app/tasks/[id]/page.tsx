@@ -14,6 +14,7 @@ import {
   IconX,
 } from "@/components/icons";
 import { STATUS_COLOR, STATUS_LABEL, fmt, fmtDate } from "@/lib/types";
+import ChatBox from "@/components/ChatBox";
 
 export default function TaskDetailPage() {
   const params = useParams<{ id: string }>();
@@ -113,7 +114,7 @@ export default function TaskDetailPage() {
           </div>
           <div className="flex items-center gap-2 text-sm text-muted">
             <IconBot size={16} className="text-accent-400" />
-            Заказчик: {customer?.name ?? "—"}
+            Заказчик: {customer ? (<Link href={`/users/${task.customerId}`} className="hover:text-accent-400">{customer.name}</Link>) : "—"}
             {customer && customer.rating > 0 && (
               <span className="inline-flex items-center gap-0.5 text-accent-300">
                 <IconStar size={13} /> {customer.rating}
@@ -219,7 +220,7 @@ export default function TaskDetailPage() {
 
             {task.status === "in_progress" && executor && (
               <p className="text-sm text-muted">
-                В работе: <b className="text-cream">{executor.name}</b>. Средства заблокированы на эскроу
+                В работе: <Link href={`/users/${task.executorId}`} className="hover:text-accent-400"><b className="text-cream">{executor.name}</b></Link>. Средства заблокированы на эскроу
                 до приёмки работы.
               </p>
             )}
@@ -312,6 +313,13 @@ export default function TaskDetailPage() {
             )}
           </div>
         )}
+
+      {(isOwner || isExecutor) && (
+        <div className="border-t border-navy-700/70 pt-5 mt-5">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted">Чат</h3>
+          <ChatBox taskId={task.id} userId={current!.id} enabled={true} />
+        </div>
+      )}
 
         {!current && (task.status === "in_progress" || task.status === "review") && (
           <div className="border-t border-navy-700/70 pt-5 text-sm text-muted">
