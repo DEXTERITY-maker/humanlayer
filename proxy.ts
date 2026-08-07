@@ -5,7 +5,7 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const LIMIT = 30;
 const WINDOW = 60_000;
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   // Rate-limit только для API
   if (req.nextUrl.pathname.startsWith("/api/")) {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -36,6 +36,6 @@ export function middleware(req: NextRequest) {
   return response;
 }
 
-export const config = {
+export const proxyConfig = {
   matcher: "/api/:path*",
 };
