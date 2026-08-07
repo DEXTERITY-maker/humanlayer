@@ -7,7 +7,7 @@ export const seedUsers: User[] = [
   {
     id: "u-anna",
     name: "Анна Соколова",
-    email: "anna.sokolova@photo.hl",
+    email: "anna.sokolova@example.org",
     role: "executor",
     city: "Москва",
     phone: "+7 900 111-22-33",
@@ -22,7 +22,7 @@ export const seedUsers: User[] = [
   {
     id: "u-dmitry",
     name: "Дмитрий Орлов",
-    email: "dmitry.orlov@courier.hl",
+    email: "dmitry.orlov@example.org",
     role: "executor",
     city: "Санкт-Петербург",
     phone: "+7 911 555-44-33",
@@ -37,11 +37,10 @@ export const seedUsers: User[] = [
   {
     id: "u-maria",
     name: "Мария Лебедева",
-    email: "maria.lebedeva@translate.hl",
+    email: "maria.lebedeva@example.org",
     role: "executor",
     city: "Казань",
     phone: "+7 917 222-11-00",
-    telegram: "@m_lebed",
     skills: ["Перевод", "Печать", "Уборка"],
     hourlyRate: 1000,
     rating: 5.0,
@@ -52,7 +51,7 @@ export const seedUsers: User[] = [
   {
     id: "u-ivan",
     name: "Иван Крылов",
-    email: "ivan.krylov@repair.hl",
+    email: "ivan.krylov@example.org",
     role: "executor",
     city: "Новосибирск",
     phone: "+7 923 777-88-99",
@@ -67,7 +66,7 @@ export const seedUsers: User[] = [
   {
     id: "u-elena",
     name: "Елена Виноградова",
-    email: "elena.vinogradova@dev.hl",
+    email: "elena.vinogradova@example.org",
     role: "executor",
     city: "Екатеринбург",
     phone: "+7 922 333-44-55",
@@ -223,7 +222,7 @@ export const seedTasks: Task[] = [
     id: "t-8",
     title: "Тестирование мобильного приложения",
     description:
-      "Прогнать тест-кейсы бета-версии Android-приложения (30 сценариев), заполнить отчёт о багах с видео-фиксацией. Доступ к тестовой сборке дам. Работать можно удалённо.",
+      "Провести функциональное тестирование Android-приложения (30 сценариев), заполнить отчёт о багах с видео-фиксацией. Доступ к сборке предоставлю. Работать можно удалённо.",
     category: "Тестирование",
     city: "Москва",
     deadline: "2026-08-13",

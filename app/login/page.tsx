@@ -24,11 +24,6 @@ export default function LoginPage() {
     router.push("/account");
   };
 
-  const fill = (em: string) => {
-    setEmail(em);
-    setPassword("demo");
-    setError(null);
-  };
 
   return (
     <div className="mx-auto max-w-md px-4 py-10">

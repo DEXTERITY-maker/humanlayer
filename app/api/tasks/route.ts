@@ -3,13 +3,18 @@ import { q, rowToTask, withTx } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
 import { uid } from "@/lib/types";
 
-// GET /api/tasks?city=&category=&status=&q=&page=&limit= — список заданий
+// GET /api/tasks?city=&category=&status=&q=&maxBudget=&sort=&page=&limit= — серверный поиск с пагинацией
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const city = searchParams.get("city");
   const category = searchParams.get("category");
   const status = searchParams.get("status");
   const qText = searchParams.get("q");
+  const maxBudget = searchParams.get("maxBudget");
+  const sort = searchParams.get("sort") || "new";
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "12", 10)));
+  const offset = (page - 1) * limit;
 
   const conds: string[] = [];
   const vals: unknown[] = [];
@@ -29,9 +34,31 @@ export async function GET(req: Request) {
     vals.push(`%${qText}%`);
     conds.push(`(title ILIKE $${vals.length} OR description ILIKE $${vals.length})`);
   }
+  if (maxBudget) {
+    vals.push(Number(maxBudget));
+    conds.push(`budget <= $${vals.length}`);
+  }
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
-  const rows = await q(`SELECT * FROM tasks ${where} ORDER BY created_at DESC`, vals);
-  return NextResponse.json({ tasks: rows.map(rowToTask) });
+
+  // Сортировка: new = сначала новые, budget = сначала дешёвые
+  const orderBy = sort === "budget" ? "ORDER BY budget ASC" : "ORDER BY created_at DESC";
+
+  // Общее количество (без пагинации)
+  const countRows = await q(`SELECT COUNT(*)::int AS total FROM tasks ${where}`, vals);
+  const total = countRows[0]?.total ?? 0;
+
+  // Основной запрос с LIMIT/OFFSET
+  const rows = await q(
+    `SELECT * FROM tasks ${where} ${orderBy} LIMIT $${vals.length + 1} OFFSET $${vals.length + 2}`,
+    [...vals, limit, offset]
+  );
+
+  return NextResponse.json({
+    tasks: rows.map(rowToTask),
+    total,
+    page,
+    limit,
+  });
 }
 
 // POST /api/tasks — создание задания (только заказчик, эскроу: бюджет списывается сразу)
