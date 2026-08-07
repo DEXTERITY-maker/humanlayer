@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { q, rowToTask } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 // POST /api/tasks/[id]/assign { executorId } — заказчик назначает исполнителя (pending → in_progress)
 export async function POST(
@@ -47,5 +48,6 @@ export async function POST(
     id,
   ]);
   const rows = await q("SELECT * FROM tasks WHERE id = $1", [id]);
+  try { await notify(executorId, "assign", `Вас назначили исполнителем на «${rows[0].title}»`, `/tasks/${id}`); } catch {}
   return NextResponse.json({ task: rowToTask(rows[0]) });
 }

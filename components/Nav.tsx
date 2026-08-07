@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useStore } from "@/components/AppProvider";
+import NotificationsBell from "@/components/NotificationsBell";
 import { IconBot, IconCoins, IconLogout, IconPlus, IconUser } from "@/components/icons";
 import { fmt } from "@/lib/types";
 
@@ -48,6 +49,7 @@ export default function Nav() {
         <div className="hidden items-center gap-3 md:flex">
           {ready && current ? (
             <>
+              <NotificationsBell />
               <span
                 className="flex items-center gap-1.5 rounded-xl border border-mint-500/30 bg-mint-500/10 px-3 py-1.5 text-sm font-semibold text-mint-300"
                 title="Тестовый баланс (кредиты)"
@@ -94,6 +96,7 @@ export default function Nav() {
             <div className="mt-2 flex items-center gap-2 border-t border-navy-700 pt-3">
               {ready && current ? (
                 <>
+                  <NotificationsBell />
                   <span className="flex items-center gap-1.5 rounded-xl border border-mint-500/30 bg-mint-500/10 px-3 py-1.5 text-sm font-semibold text-mint-300">
                     <IconCoins size={15} />
                     {fmt(current.balance)}

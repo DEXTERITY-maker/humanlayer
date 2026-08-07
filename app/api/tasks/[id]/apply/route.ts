@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { q, rowToTask } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 // POST /api/tasks/[id]/apply — отклик исполнителя (open → pending)
 export async function POST(
@@ -39,5 +40,7 @@ export async function POST(
     [JSON.stringify(updated), id]
   );
   const rows = await q("SELECT * FROM tasks WHERE id = $1", [id]);
+  // not критична — фоновый notify
+  try { await notify(task.customer_id, "apply", `Новый отклик на задание «${task.title}»`, `/tasks/${id}`); } catch {}
   return NextResponse.json({ task: rowToTask(rows[0]) });
 }

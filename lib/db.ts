@@ -57,6 +57,16 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at BIGINT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_reviews_to ON reviews(to_id);
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  type TEXT NOT NULL,
+  message TEXT NOT NULL,
+  link TEXT NOT NULL DEFAULT '',
+  read BOOLEAN NOT NULL DEFAULT false,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, read, created_at);
 `;
 
 let schemaReady: Promise<void> | null = null;

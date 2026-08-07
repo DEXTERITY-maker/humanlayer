@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { q, rowToTask, withTx } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 // POST /api/tasks/[id]/accept — заказчик принимает работу: выплата исполнителю (review → done)
 // Сумма: для почасовых — часы × ставка, но не больше бюджета; комиссия платформы 5%.
@@ -49,5 +50,6 @@ export async function POST(
   });
 
   const rows = await q("SELECT * FROM tasks WHERE id = $1", [id]);
+  try { await notify(task.executor_id, "accept", `Работа по заданию принята!`, `/tasks/${id}`); } catch {}
   return NextResponse.json({ task: rowToTask(rows[0]), payout });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { q, rowToTask } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 
 // POST /api/tasks/[id]/reject { comment } — заказчик отклоняет отчёт (review → in_progress с комментарием)
 export async function POST(
@@ -31,5 +32,6 @@ export async function POST(
     id,
   ]);
   const rows = await q("SELECT * FROM tasks WHERE id = $1", [id]);
+  try { await notify(task.executor_id, "reject", "Отчёт отклонён заказчиком", `/tasks/${id}`); } catch {}
   return NextResponse.json({ task: rowToTask(rows[0]) });
 }

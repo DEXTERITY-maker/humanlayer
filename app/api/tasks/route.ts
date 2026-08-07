@@ -3,7 +3,7 @@ import { q, rowToTask, withTx } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
 import { uid } from "@/lib/types";
 
-// GET /api/tasks?city=&category=&status=&q= — список заданий
+// GET /api/tasks?city=&category=&status=&q=&page=&limit= — список заданий
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const city = searchParams.get("city");
